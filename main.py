@@ -1,10 +1,11 @@
 import pygame
 import numpy as np
+import cv2
 
 pygame.init()
 
 WIDTH, HEIGHT = 800, 600
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
+screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
 pygame.display.set_caption("3D Rotating Cube")
 
 
@@ -119,13 +120,31 @@ def make_2d_points(points_3d):
 clock = pygame.time.Clock()
 is_running = True
 
+#!  camera setup
+cap = cv2.VideoCapture(0) # for laptop camera
+# cap = cv2.VideoCapture("http://192.168.1.103:4747/video") # for droidcam app
+
 while is_running:
     clock.tick(60)
 
     for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            is_running = False
-    screen.fill(WHITE)
+            if event.type == pygame.QUIT:
+                is_running = False
+            elif event.type == pygame.VIDEORESIZE:
+                WIDTH, HEIGHT = event.w, event.h
+                screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
+    # Capture video frame
+    ret, frame = cap.read()
+    if ret:
+        # Resize frame to fit window if needed
+        frame = cv2.resize(frame, (WIDTH, HEIGHT))
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        frame = np.rot90(frame)
+        frame_surface = pygame.surfarray.make_surface(frame)
+        screen.blit(frame_surface, (0, 0))
+    else:
+        screen.fill(WHITE)
+
     # make angles bigger so cube rotates
     rotation_x = rotation_x + 0.01
     rotation_y = rotation_y + 0.01
